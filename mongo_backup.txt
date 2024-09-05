@@ -1,0 +1,32 @@
+@echo off
+REM Set the path to your MongoDB bin directory
+set MONGO_BIN_PATH=D:\download (crome)\mongodb-database-tools-windows-x86_64-100.10.0\bin
+
+REM Set the backup directory to a different drive
+set BACKUP_DIR=D:\mongodb_backups
+
+REM Set your MongoDB URI
+set MONGO_URI=
+
+REM Get the current date for the backup folder in YYYY-MM-DD format
+for /f "tokens=2 delims==" %%I in ('"wmic os get localdatetime /value"') do set datetime=%%I
+set "year=%datetime:~0,4%"
+set "month=%datetime:~4,2%"
+set "day=%datetime:~6,2%"
+set "DATE=%year%-%month%-%day%"
+REM Set the backup folder name with timestamp
+set BACKUP_FOLDER=%BACKUP_DIR%\backup_%DATE%
+REM Create the backup folder
+mkdir %BACKUP_FOLDER%
+REM Perform the backup using the MongoDB URI
+"%MONGO_BIN_PATH%\mongodump" --uri="%MONGO_URI%" --out="%BACKUP_FOLDER%"
+REM Rename collection folders to include the date
+for /d %%G in ("%BACKUP_FOLDER%\*") do (
+    ren "%%G" "%%~nxG"
+)
+REM Check if the backup was successful
+if %ERRORLEVEL% NEQ 0 (
+    echo Backup failed.
+    exit /b %ERRORLEVEL%
+)
+echo Backup completed successfully.
